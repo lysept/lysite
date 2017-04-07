@@ -3,48 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <title>Experiment Detail</title>
+    <style>
+        .topo{
+            margin-top:30px;
+            height: 350px;
+            width: 500px;
+        }
+    </style>
+    <script src="http://demo.qunee.com/js/jquery/jquery.min.js"></script>
+    <script src="http://demo.qunee.com/lib/qunee-min.js"></script>
 </head>
 <body>
 
-
 <div class="header">
-    <span><a href="{% url 'exp_detail' E_Detail_Dict.id %}">{{ E_Detail_Dict.exp_name }}</a></span>
+   <span><a href="{% url 'exp_detail' c.E_Detail_Dict.id %}">{{ c.E_Detail_Dict.exp_name }}</a></span>
 </div>
 
 <div class="content">
     <div class="blog">
         <div class="title">
-            <a href="#"><h2>{{ E_Detail_Dict.exp_name }}</h2></a>
+            <a href="#"><h2>{{ c.E_Detail_Dict.exp_name }}</h2></a>
         </div>
         <div>
             <p>显示当前Experiment详情
 
-                <a href="{% url 'exp_edit' E_Detail_Dict.id %}" target="_blank">编辑</a>|
-                <a href="{% url 'exp_share' E_Detail_Dict.id %}" >共享</a>|
+                <a href="{% url 'exp_edit' c.E_Detail_Dict.id %}" target="_blank">编辑</a>|
+                <a href="{% url 'exp_share' c.E_Detail_Dict.id %}" >共享</a>|
 
 
-                <a href="{% url 'exp_launch' E_Detail_Dict.id %}" target="_blank">启动</a>|
-                <a href="{% url 'exp_copy' E_Detail_Dict.id %}" target="_blank">复制</a>|
-                <a href="{% url 'exp_delivery' E_Detail_Dict.id %}" target="_blank">分发</a>|
+                <a href="{% url 'exp_launch' c.E_Detail_Dict.id %}" target="_blank">启动</a>|
+                <a href="{% url 'exp_copy' c.E_Detail_Dict.id %}" target="_blank">复制</a>|
+                <a href="{% url 'exp_delivery' c.E_Detail_Dict.id %}" target="_blank">分发</a>|
 
-            <a href="{% url 'exp_guide_download' E_Detail_Dict.id%}">下载实验指导书</a>|
+            <a href="{% url 'exp_guide_download' c.E_Detail_Dict.id%}">下载实验指导书</a>|
             <a href="javascript:window.opener=null;window.open('','_self');window.close()" >关闭</a></p>
         </div>
 
         <div class="info">
-            <span class="catagory" style="color: #ff9900;">实验编号：{{ E_Detail_Dict.id }}</span>
-            <span class="catagory" style="color: #ff9900;">包含主机数量：{{ E_Detail_Dict.VM_count }}</span>
-            <span class="author" style="color: #4a86e8;">所有者：{{ E_Detail_Dict.exp_owner }}</span>
-            <span class="author" style="color: #4a86e8;">是否共享：{{ E_Detail_Dict.is_shared }}</span>
-            <span class="created" style="color: #6aa84e;">创建日期：{{ E_Detail_Dict.exp_createtime |date:"Y-m-d H:i" }}</span>
-            <span class="created" style="color: #6aa84e;">更新日期：{{ E_Detail_Dict.exp_updatetime |date:"Y-m-d H:i" }}</span>
+            <span class="catagory" style="color: #ff9900;">实验编号：{{ c.E_Detail_Dict.id }}</span>
+            <span class="catagory" style="color: #ff9900;">包含主机数量：{{ c.E_Detail_Dict.VM_count }}</span>
+            <span class="author" style="color: #4a86e8;">所有者：{{ c.E_Detail_Dict.exp_owner }}</span>
+            <span class="author" style="color: #4a86e8;">是否共享：{{ c.E_Detail_Dict.is_shared }}</span>
+            <span class="created" style="color: #6aa84e;">创建日期：{{ c.E_Detail_Dict.exp_createtime |date:"Y-m-d H:i" }}</span>
+            <span class="created" style="color: #6aa84e;">更新日期：{{ c.E_Detail_Dict.exp_updatetime |date:"Y-m-d H:i" }}</span>
         </div>
         <div class="summary">
-            实验描述：{{ E_Detail_Dict.exp_description }}
+            实验描述：{{ c.E_Detail_Dict.exp_description }}
         </div>
         <div class="summary">
             包含镜像：
-            {% for item in E_Detail_Dict.exp_images %}
+            {% for item in c.E_Detail_Dict.exp_images %}
                 <ul>
                     <li><a href="{% url 'repo_image_detail' item.id %}" target="_blank">{{ item.name }}</a></li>
                 </ul>
@@ -53,7 +61,7 @@
         </div>
         <div class="summary">
             包含网络：
-            {% for item in E_Detail_Dict.exp_network %}
+            {% for item in c.E_Detail_Dict.exp_network %}
                 <ul>
                     <li><a href="{% url 'repo_network_detail' item.id %}" target="_blank">{{ item.network_name }}</a>({{ item.cidr }})</li>
                 </ul>
@@ -61,63 +69,100 @@
         </div>
 
         <div class="summary">
-            包含主机：[<a href="{% url 'exp_create_VM' E_Detail_Dict.id %}" target="_blank">添加虚拟机</a>]
-            {% for item in E_Detail_Dict.VMList %}
+            包含主机：[<a href="{% url 'exp_create_VM' c.E_Detail_Dict.id %}" target="_blank">添加虚拟机</a>]
+            {% for item in c.E_Detail_Dict.VMList %}
                 <ul>
                     <li><a href="{% url 'repo_VM_detail' item.id %}" target="_blank">{{ item.name }}</a>[<a href="{% url 'repo_VM_delete' item.id %}" >删除</a>]</li>
                 </ul>
             {% endfor %}
         </div>
 
-        <div>
+        <div class="topo">
             <p>实验网络拓扑：</p>
+                <div id="canvas" style="width: 500px; height: 300px; margin: auto; border: solid 1px #2898E0;"></div>
+                <script>
+                var graph = new Q.Graph("canvas");
+
+                function onDataCollected(txt){
+                    var json = JSON.parse(txt);
+                    translateToQuneeElements(json, graph);
+                }
+                function translateToQuneeElements(json, graph){
+                    var map = {};
+                    if(json.nodes){
+                        Q.forEach(json.nodes, function(data){
+                            var node = graph.createNode(data.name, data.x || 0, data.y || 0);
+                            node.set("data", data);
+                            map[data.id] = node;
+                        });
+                    }
+                    if(json.edges){
+                        Q.forEach(json.edges, function(data){
+                            var from = map[data.from];
+                            var to = map[data.to];
+                            if(!from || !to){
+                                return;
+                            }
+                            var edge = graph.createEdge(data.name, from, to);
+                            edge.set("data", data);
+                        }, graph);
+                    }
+                }
+                var Topo= {{Topo|safe}};
+                Topo = Topo[0];
+                var layouter = new Q.SpringLayouter(graph);
+                layouter.repulsion = 90;
+                layouter.attractive = 0.4;
+                layouter.elastic = 0;
+                layouter.start();
+                onDataCollected(Topo);
+
+                </script>
+
         </div>
         <div>
-            实验指南：{{ E_Detail_Dict.exp_guide }}
+            实验指南：{{ c.E_Detail_Dict.exp_guide }}
         </div>
 
-{#        {% ifequal role 'teacher' %}#}
-            <div>
-                实验结果参考（教师给出实验结果作为评分依据）：{{ E_Detail_Dict.exp_result }}
-            </div>
-            <div>
-                实验报告（学生所提交的实验报告所在repo目录）：{{ E_Detail_Dict.exp_reportDIR }}
-            </div>
-            <div>
-                分发历史记录:
-                <table>
+        {#        {% ifequal role 'teacher' %}#}
+        <div>
+            实验结果参考（教师给出实验结果作为评分依据）：{{ c.E_Detail_Dict.exp_result }}
+        </div>
+        <div>
+            实验报告（学生所提交的实验报告所在repo目录）：{{ c.E_Detail_Dict.exp_reportDIR }}
+        </div>
+        <div>
+            分发历史记录:
+            <table>
+                <tr>
+                    <td>ID</td>
+                    <td>Delivery Name</td>
+                    <td>Delivery Time</td>
+                    <td>Group</td>
+                </tr>
+
+                {% for item in c.E_Detail_Dict.delivery_history %}
                     <tr>
-                        <td>ID</td>
-                        <td>Delivery Name</td>
-                        <td>Delivery Time</td>
-                        <td>Group</td>
+                        <td><a href="{% url 'delivery_detail' item.id %}"><span class="catagory" style="color: #ff9900;">{{ item.id }}</span></a></td>
+                        <td><span class="author" style="color: #4a86e8">{{ item.name }}</span></td>
+                        <td><span class="created" style="color: #6aa84f">{{ item.delivery_time|date:"Y-m-d H:i" }}</span></td>
+                        <td><span class="category" style="color: #ff9900;">{{ item.group.name }}</span></td>
                     </tr>
-
-                    {% for item in E_Detail_Dict.delivery_history %}
-                        <tr>
-                            <td><a href="{% url 'delivery_detail' item.id %}"><span class="catagory" style="color: #ff9900;">{{ item.id }}</span></a></td>
-                            <td><span class="author" style="color: #4a86e8">{{ item.name }}</span></td>
-                            <td><span class="created" style="color: #6aa84f">{{ item.delivery_time|date:"Y-m-d H:i" }}</span></td>
-                            <td><span class="category" style="color: #ff9900;">{{ item.group.name }}</span></td>
-                        </tr>
-                    {% empty %}
-                        <p>抱歉,Delivery History列表为空</p>
-                    {% endfor %}
-                </table>
-            </div>
-
-
+                {% empty %}
+                    <p>抱歉,Delivery History列表为空</p>
+                {% endfor %}
+            </table>
         </div>
-
-
-
-
-
 
 
     </div>
 
+
 </div>
+
 
 </body>
 </html>
+
+
+

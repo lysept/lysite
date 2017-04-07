@@ -3,15 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <title>Exp Launch</title>
+    <style>
+        .document{
+            float: left;
+            width:40%;
+            height:500px;
+            border: solid #6AC5AC 3px;
+        }
+        .vm{
+            margin-left: 43%;
+            width:55%;
+            height: 500px;
+            border: solid #6AC5AC 3px;
+        }
+        .down{
+            margin-top:30px;
+            height: 400px;
+            border: solid #6AC5AC 3px;
+        }
+    </style>
+    <script src="http://demo.qunee.com/js/jquery/jquery.min.js"></script>
+    <script src="http://demo.qunee.com/lib/qunee-min.js"></script>
 </head>
 <body>
 <p>这是实验启动实例后出现的页面！</p>
-    <p>
+<div class="document">
+    <p>这是实验说明的显示区域！</p>
+    <embed width="100%" height="445" src="http://127.0.0.1:8000/static/testpdf.pdf"></embed>
+</div>
+<div class="vm">
+    <p>这是实验区域！</p>
+  <!--  <p>这是iframe方式pdf的显示区域！</p>
+    <iframe src="test_pdf.pdf" width="99%" height="445"></iframe>  -->
+</div>
+<div class="down" align="center">
+    <p>这是底部topo显示区域！</p>
+    <div id="canvas" style="width: 500px; height: 300px; margin: auto; border: solid 1px #2898E0;"></div>
+    <script>
+	var graph = new Q.Graph("canvas");
+
+    function onDataCollected(txt){
+        var json = JSON.parse(txt);
+        translateToQuneeElements(json, graph);
+    }
+    function translateToQuneeElements(json, graph){
+        var map = {};
+        if(json.nodes){
+            Q.forEach(json.nodes, function(data){
+                var node = graph.createNode(data.name, data.x || 0, data.y || 0);
+                node.set("data", data);
+                map[data.id] = node;
+            });
+        }
+        if(json.edges){
+            Q.forEach(json.edges, function(data){
+                var from = map[data.from];
+                var to = map[data.to];
+                if(!from || !to){
+                    return;
+                }
+                var edge = graph.createEdge(data.name, from, to);
+                edge.set("data", data);
+            }, graph);
+        }
+    }
+
+    var Topo= {{Topo|safe}};
+    Topo = Topo[0];
+    var layouter = new Q.SpringLayouter(graph);
+    layouter.repulsion = 90;
+    layouter.attractive = 0.4;
+    layouter.elastic = 0;
+    layouter.start();
+    onDataCollected(Topo);
+    </script>
+</div>
+   <!-- <p>
     {% for key,value in ExpInstance_dict.items %}
         <ul>
             <li>{{ key }}:{{ value }}</li>
         </ul>
     {% endfor %}
-    </p>
+    </p>-->
 </body>
 </html>
+
+
+
+

@@ -21,6 +21,7 @@ from Iserlab.login import *
 from Iserlab.home import *
 from people.views import *
 from blog.views import *
+import settings
 
 
 urlpatterns = [
@@ -200,5 +201,5 @@ urlpatterns = [
     url(r'^delivery_delete/(\d+)/$', delivery_delete, name='delivery_delete'),
     url(r'^delivery_create/$', delivery_create, name='delivery_create'),
 
-
+    url(r'^static/(?P<path>.*)$', 'django.views.static.serve',{ 'document_root': settings.STATIC_URL }),
 ]

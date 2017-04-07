@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 #This page just include those data wanted to be show on home.html
+import json
 from django.contrib import messages
 from django.shortcuts import render,render_to_response
 from django.http import HttpResponse,Http404
@@ -2550,8 +2551,53 @@ def exp_detail(request,exp_id):
     # output the group detail-----------------------------UI--------------------------
     c = {}
     c['username']=request.session['username']
-    c['E_Detail_Dict'] = E_Detail_Dict
-    return render(request, 'exp_detail.html', c)
+    c['E_Detail_Dict'] =E_Detail_Dict
+
+
+    #ly topo 2017/4/6
+    images = e.exp_images.all()
+
+    vms = VM.objects.filter(exp=e)
+
+    networks = e.exp_network.all()
+
+    topo_ndict = {}
+    count = 0
+    topo_info = '{"nodes":['
+    for vm in vms:
+        count = count + 1
+        topo_info = topo_info + '{"name":"' + vm.name + '","id":' + str(count) + '},'
+        topo_ndict[vm.name] = count
+    for network in networks:
+        count = count + 1
+        topo_info = topo_info + '{"name":"' + network.network_name + '","id":' + str(count) + '},'
+        topo_ndict[network.network_name] = count
+    count = count + 1
+    topo_info = topo_info + '{"name":"Router","id":' + str(count) + ',"x":-100,"y":-50}], "edges": ['
+    topo_ndict['router'] = count
+
+    count = 0
+    for vm in vms:
+        count = count + 1
+        if count != 1:
+            topo_info = topo_info + ','
+        topo_info = topo_info + '{"name":"edge' + str(count) + '","from":' + str(topo_ndict[vm.name]) + ',"to":' + str(
+            topo_ndict[vm.network.network_name]) + '}'
+    for network in networks:
+        count = count + 1
+        if count != 1:
+            topo_info = topo_info + ','
+        topo_info = topo_info + '{"name":"edge' + str(count) + '","from":' + str(
+            topo_ndict[network.network_name]) + ',"to":' + str(topo_ndict['router']) + '}'
+
+    topo_info = topo_info + ']}'
+    Topo=[]
+    Topo.append(topo_info)
+
+    #  Topo=['{"nodes":[{"name": "C", "id": 3},{"name": "A", "x": -100, "y": -50, "id": 1}, {"name": "B", "id": 2}], "edges": [{"name": "Edge", "from":1, "to":2}]}']
+
+# ly topo 2017/4/6    return render(request, 'exp_detail.html',{'Topo':json.dumps(Topo),'c':c})
+    return render(request, 'exp_detail.html',{'Topo':json.dumps(Topo),'c':c})
 
 
 #teacher
@@ -2567,28 +2613,47 @@ def exp_launch(request,exp_id):# in fact, it create ExpInstance
     images = e.exp_images.all()
 
     vms = VM.objects.filter(exp=e)
-    #launch all networks that vms need
-    #---get network info
+
     networks = e.exp_network.all()
-    #---openstack API use
-
-    #---insert into NetworkInstance
-
-    #create router
-
-
-    #attach the network to router
-
-    #launch VM
-
-    #insert into ExpInstance db
 
     c = {}
     c['netDict']=''
     c['routerDict']=''
     c['vmDict']=''
 
-    return render(request,'exp_launch.html',c)
+#2017.3.28 ly topo
+    topo_ndict={}
+    count=0
+    topo_info='{"nodes":['
+    for vm in vms:
+        count=count+1
+        topo_info=topo_info+'{"name":"'+vm.name+'","id":'+str(count)+'},'
+        topo_ndict[vm.name]=count
+    for network in networks:
+        count=count+1
+        topo_info=topo_info+'{"name":"'+network.network_name+'","id":'+str(count)+'},'
+        topo_ndict[network.network_name] = count
+    count=count+1
+    topo_info=topo_info+'{"name":"Router","id":'+str(count)+',"x":-100,"y":-50}], "edges": ['
+    topo_ndict['router']=count
+
+    count=0
+    for vm in vms:
+        count=count+1
+        if count!=1:
+            topo_info = topo_info + ','
+        topo_info=topo_info +'{"name":"edge'+str(count) +'","from":'+str(topo_ndict[vm.name])+',"to":'+str(topo_ndict[vm.network.network_name])+'}'
+    for network in networks:
+        count=count+1
+        if count!=1:
+            topo_info = topo_info + ','
+        topo_info = topo_info + '{"name":"edge' + str(count) + '","from":' + str(topo_ndict[network.network_name]) + ',"to":' +str(topo_ndict['router'])+ '}'
+
+    topo_info=topo_info +']}'
+    Topo=[]
+    Topo.append(topo_info)
+  #  Topo=['{"nodes":[{"name": "C", "id": 3},{"name": "A", "x": -100, "y": -50, "id": 1}, {"name": "B", "id": 2}], "edges": [{"name": "Edge", "from":1, "to":2}]}']
+    return render(request,'exp_launch.html',{'Topo':json.dumps(Topo)})
 
 #when stu launch and teacher check exp result, use this function
 def exp_score_launch(request,score_id):
